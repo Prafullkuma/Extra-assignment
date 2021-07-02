@@ -1,0 +1,216 @@
+<html>
+    <head>
+        <title>Post</title>
+        
+    </head>
+    <body>
+        <div id="root">
+        
+        </div>
+
+        <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+        <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+        <script crossorigin src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <!--semantic-React -->
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha512-dqw6X88iGgZlTsONxZK9ePmJEFrmHwpuMrsUChjAw1mRUhUITE5QU9pkcSox+ynfLhL15Sv2al5A0LVyDCmtUw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha512-8bHTC73gkZ7rZ7vpqUQThUDhqcNFyYi2xgDgPDHc+GXVGHXq+xPjynxIopALmOPqzo9JZj0k6OqqewdGO3EsrQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+ 
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <script type="text/babel">
+            const rootHandle=document.querySelector('#root')
+            const {useState,useEffect}=React
+            
+
+            const Listing=(props)=>{
+                const {id,title,body,like,disLike,increamentLike,increamentDisLike}=props
+              return(
+
+                    <div>
+                        <div className="ui equal width grid">
+                            <div className="stretched row">
+                                <div className="sixteen wide column">
+                                   <div className="ui segment">        
+                                     <h2 className="ui header grey basic">{title}</h2>
+                                      <h3 className="ui header">{body}</h3>
+                                       <div className="stretched row" >
+                                           
+                                            <i style={{fontSize:'30px',margin:'20px',cursor:'pointer' }}   className="fas fa-heart" onClick={()=>{increamentLike(id)}}><span>{like}</span></i>
+                                            
+                                            <i style={{fontSize:'30px',cursor:'pointer'}} className="fas fa-thumbs-down" onClick={()=>{increamentDisLike(id)}}><span style={{padding:'10px'}}>{disLike}</span></i>
+                                        
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+            const App=()=>{
+                const [post,setPost]=useState([])
+                const [pages,setPages]=useState(1)
+                const [like,setLike]=useState(0)
+                const [disLike,setDislike]=useState(0)
+                const [input,setInput]=useState('')
+                const [search,setSearch]=useState([])
+                const [options,setOptions]=useState('')
+                const [errorf,setErrorF]=useState({})
+                const [selectSearch,setSelectSearch]=useState([])
+
+                let err={}
+
+                 useEffect(()=>{
+                     axios.get(`https://jsonplaceholder.typicode.com/posts?_page=${pages}&_limit=10`)
+                    .then((res)=>{
+                        const result=res.data.map((ele)=>{
+                            return {...ele,...{like:like},...{disLike:disLike}}
+                        }) 
+                        setPost([...post,...result])
+                     }).catch((err)=>{
+                        console.log(err)
+                    })
+                 },[pages])   
+
+                 const incrementPage=()=>{
+                     const page=pages+1
+                     setPages(page)
+                 }
+                 const loadMoreButton=()=>{
+                    incrementPage()
+                 }
+
+                 const increamentLike=(id)=>{
+                    const result=post.map((ele)=>{
+                        if(ele.id===id){        
+                            return {...ele,...{ like:ele.like+1 }}
+                        }else{
+                            return {...ele}
+                        }
+                    })   
+                    setPost(result)
+                }
+
+                const increamentDisLike=(id)=>{  
+                    const result=post.map((ele)=>{
+                        if(ele.id===id){
+                            return {...ele,...{ disLike:ele.disLike+1 }}
+                        }else{
+                            return {...ele}
+                        }
+                    })   
+                    setPost(result)
+                }
+
+                const searchHandle=(e)=>{
+                    const inp=e.target.value
+                    setInput(inp)
+                    const result=post.filter((ele)=>{
+                        if(ele.title.includes(inp)){
+                            return ele
+                        }
+                    })
+                    setSearch(result)
+                }
+                
+
+                const handleOptionChange=(e)=>{
+                    const selectOption=e.target.value
+                   if(selectOption ==="like"){
+                       const result=post.filter((ele)=>{
+                            return ele.like>0
+                       })
+                       if(result.length ===0){
+                           err.options="There is not likes"
+                           setErrorF(err)
+                           setPost([])
+                       }else{
+                            setErrorF('')
+                            setPost(result)
+                       }
+                      
+                   }
+
+                   if(selectOption==='disLike'){
+                       const result=post.filter((ele)=>{
+                           return ele.disLike >0
+                       })
+                       if(result.length ===0){
+                           err.options="There is no disLike"
+                           setErrorF(err)
+                           setPost([])
+                       }else{
+                           setErrorF('')
+                           setPost(result)
+                       }
+                   }
+                }
+
+                return(
+                    <div style={{margin:'35px'}}>
+
+                        <div className="ui clearing segment">
+                            <h2 className="ui left blue floated header">Post Listing</h2>
+                        </div>
+                       
+                        <div className="ui segment">
+                            <div className="ui very relaxed two column grid">
+                                <div className="column ">
+                                    <label style={{fontSize:'20px'}}>Search by title</label>
+                                    <div className="ui action input" style={{margin:'20px'}}>
+                                       
+                                        <input type="text" value={input} onChange={searchHandle}placeholder="Search By Title..."/>      
+                                    </div>
+                                </div>
+                                 <div className="column">
+                                    <select  style={{margin:'20px'}} role="combobox" className="ui search selection dropdown"
+                                     value={options}
+
+                                      onChange={handleOptionChange}
+                                     >
+                                        <option value=""> Select Options</option>
+                                        { ['like','disLike'].map((ele)=>{
+                                            return <option key={ele} value={ele}>{ele}</option>
+                                        })}
+                                     </select> 
+                                 </div>
+                                </div>
+                                {errorf.options && <span>{errorf.options}</span>}
+                                    
+                            </div> 
+                       
+                        { search.length !==0 ?
+                            search.map((ele)=>{
+                                return <Listing key={ele.id} 
+                                                {...ele}
+                                                increamentDisLike={increamentDisLike} 
+                                                increamentLike={increamentLike}
+                                                searchHandle={searchHandle}/>
+                             }):
+                              post.map((ele)=>{
+                                 return  <Listing key={ele.id}
+                                                  {...ele} 
+                                                  increamentDisLike={increamentDisLike} 
+                                                  increamentLike={increamentLike}
+                                                  searchHandle={searchHandle} />
+                                  })
+                         }
+                         {selectSearch.length !==0 &&
+                            selectSearch.map((ele)=>{
+                                 return  <Listing key={ele.id}
+                                                  {...ele} 
+                                                  increamentDisLike={increamentDisLike} 
+                                                  increamentLike={increamentLike}
+                                                  searchHandle={searchHandle} />
+                                  })
+                                 }
+
+                        <button className="ui primary button" style={{margin:'35px'}} onClick={loadMoreButton}>Load more</button>
+                    </div>
+                )
+            }
+            ReactDOM.render(<App/>,rootHandle)
+        </script>
+    </body>
+</html>
